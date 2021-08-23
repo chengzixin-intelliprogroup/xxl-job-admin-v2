@@ -1,5 +1,9 @@
 package com.xxl.job.admin.controller;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.xxl.job.admin.controller.annotation.PermissionLimit;
 import com.xxl.job.admin.core.exception.XxlJobException;
 import com.xxl.job.admin.core.model.XxlJobGroup;
@@ -165,7 +169,7 @@ public class JobInfoController {
 	@RequestMapping("/triggerOnce")
 	@ResponseBody
 	@PermissionLimit(limit = false)
-	public ReturnT<String> triggerJobForHitalent(int id) {
+	public ReturnT<String> triggerJobForHitalent(int id,Long jobId) {
 		// force cover job param
 
 		XxlJobInfo jobInfo = xxlJobInfoDao.loadById(id);
@@ -173,7 +177,17 @@ public class JobInfoController {
 		{
 			return  ReturnT.FAIL;
 		}
-		JobTriggerPoolHelper.trigger(id, TriggerTypeEnum.MANUAL, -1, null, jobInfo.getExecutorParam(), null);
+		String params = jobInfo.getExecutorParam();
+		if(jobId != null)
+		{
+
+			Gson gson = new Gson();
+			JsonObject object = gson.fromJson(params,JsonObject.class);
+			object.addProperty("jobId",jobId);
+			params = gson.toJson(object);
+			System.out.println("-----------------param:"+params);
+		}
+		JobTriggerPoolHelper.trigger(id, TriggerTypeEnum.MANUAL, -1, null, params, null);
 		return ReturnT.SUCCESS;
 	}
 
